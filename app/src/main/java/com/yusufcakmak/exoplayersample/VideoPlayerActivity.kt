@@ -4,9 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.source.MediaSourceFactory
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.google.android.exoplayer2.util.Util
@@ -26,21 +24,27 @@ class VideoPlayerActivity : Activity() {
 
     private fun initializePlayer() {
 
-        val mediaDataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(this)
-
-        val mediaSource = ProgressiveMediaSource.Factory(mediaDataSourceFactory).createMediaSource(MediaItem.fromUri(STREAM_URL))
-
-        val mediaSourceFactory: MediaSourceFactory = DefaultMediaSourceFactory(mediaDataSourceFactory)
-
         simpleExoPlayer = ExoPlayer.Builder(this)
-                .setMediaSourceFactory(mediaSourceFactory)
                 .build()
 
-        simpleExoPlayer.addMediaSource(mediaSource)
+        simpleExoPlayer.addMediaSource(buildMediaSource(
+            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"))
 
         simpleExoPlayer.playWhenReady = true
         binding.playerView.player = simpleExoPlayer
         binding.playerView.requestFocus()
+    }
+
+    private fun buildMediaSource(url1: String, url2: String): MediaSource {
+
+        val mediaDataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(this)
+
+        val mediaSource1 = ProgressiveMediaSource.Factory(mediaDataSourceFactory).createMediaSource(MediaItem.fromUri(url1))
+        val mediaSource2 = ProgressiveMediaSource.Factory(mediaDataSourceFactory).createMediaSource(MediaItem.fromUri(url2))
+
+
+        return ConcatenatingMediaSource(mediaSource1, mediaSource2, mediaSource1, mediaSource2)
     }
 
     private fun releasePlayer() {
@@ -69,9 +73,5 @@ class VideoPlayerActivity : Activity() {
         super.onStop()
 
         if (Util.SDK_INT > 23) releasePlayer()
-    }
-
-    companion object {
-        const val STREAM_URL = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
     }
 }
